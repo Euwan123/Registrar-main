@@ -138,15 +138,16 @@ function StudentPortal() {
         const response = await fetch("/api/auth/me", { headers: authHeaders() });
         const result = await response.json() as {
           error?: string;
+          profileError?: string;
           profile?: {
             first_name: string;
             last_name: string;
             university_id: string;
             program: string | null;
-          };
+          } | null;
         };
         if (!response.ok || !result.profile) {
-          throw new Error(result.error || "Could not load your student profile.");
+          throw new Error(result.profileError || result.error || "Could not load your student profile.");
         }
         if (active) {
           setProfile({

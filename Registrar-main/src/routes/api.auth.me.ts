@@ -9,6 +9,19 @@ export const Route = createFileRoute('/api/auth/me')({
         if (!user) {
           return Response.json({ error: 'Authentication required.' }, { status: 401 });
         }
+
+        if (user.role !== 'student') {
+          return Response.json({ ...user, profile: null });
+        }
+
+        if (!process.env['SUPABASE_SECRET_KEY']) {
+          return Response.json({
+            ...user,
+            profile: null,
+            profileError: 'Student profile data is unavailable because SUPABASE_SECRET_KEY is not configured.',
+          });
+        }
+
         const profiles = await supabaseRequest<Array<{
           first_name: string;
           last_name: string;
@@ -25,7 +38,11 @@ export const Route = createFileRoute('/api/auth/me')({
           },
         );
         if (!profiles[0]) {
-          return Response.json({ error: 'User profile not found.' }, { status: 404 });
+          return Response.json({
+            ...user,
+            profile: null,
+            profileError: 'Student profile was not found.',
+          });
         }
         return Response.json({ ...user, profile: profiles[0] });
       },
