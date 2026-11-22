@@ -91,6 +91,13 @@ function write<T>(key: string, value: T[]) {
   window.dispatchEvent(new Event(STORE_EVENT));
 }
 
+function formatLocalDate(date: Date): string {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
 function getLocalRequests(): RegistrarRequest[] {
   const saved = read<RegistrarRequest>(REQUESTS_KEY, []);
   const actual = saved.filter((request) => !DEMO_REQUEST_IDS.has(request.id));
@@ -165,7 +172,7 @@ export const getRequests = async (): Promise<RegistrarRequest[]> => {
       delivery: req.fulfillment_method === 'pickup' ? 'Pickup' : 'Courier delivery',
       payment: req.payment_method,
       status: req.status,
-      createdAt: new Date(req.created_at).toISOString().slice(0, 10),
+      createdAt: formatLocalDate(new Date(req.created_at)),
     }));
   }
   return getLocalRequests();
@@ -207,7 +214,7 @@ function addLocalRequest(
   item: Omit<RegistrarRequest, "id" | "createdAt" | "status">,
 ): RegistrarRequest {
   const prefix = item.kind === "Document" ? "REG" : "COR";
-  const request: RegistrarRequest = { ...item, id: `${prefix}-${String(Date.now()).slice(-6)}`, createdAt: new Date().toISOString().slice(0, 10), status: "Pending Review" };
+  const request: RegistrarRequest = { ...item, id: `${prefix}-${String(Date.now()).slice(-6)}`, createdAt: formatLocalDate(new Date()), status: "Pending Review" };
   saveRequests([request, ...getLocalRequests()]);
   return request;
 }
